@@ -37,5 +37,5 @@ Maintaining this repo as part of my DSA/placement preparation and to track consi
 
 ## 🔗 Connect
 
-- LeetCode: [profile link]
+- LeetCode: https://leetcode.com/u/anju_narwal09/
 - GitHub: [github.com/anju-914](https://github.com/anju-914)
