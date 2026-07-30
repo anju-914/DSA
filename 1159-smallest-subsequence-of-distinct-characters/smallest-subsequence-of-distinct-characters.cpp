@@ -1,22 +1,30 @@
 class Solution {
 public:
     string smallestSubsequence(string s) {
-        vector<int>freq(26,0);
-        vector<bool>inStack(26,false);
-        for(char c:s)
-            freq[c-'a']++;
-        string st;
-        for(char c:s){
-            freq[c-'a']--;
-            if(inStack[c-'a'])
+        map<char, int> count, used;
+        for (char &c : s) count[c]++;
+        stack<char> st;
+        for (char &c : s) {
+            if (used[c]) {
+                count[c]--;
                 continue;
-            while(!st.empty()&&st.back()>c&&freq[st.back()-'a']>0){
-                inStack[st.back()-'a']=false;
-                st.pop_back();
             }
-            st.push_back(c);
-            inStack[c-'a']=true;
+            if (st.empty()) st.push(c);
+            else {
+                while(!st.empty() && c < st.top() && count[st.top()]) {
+                    used[st.top()] = 0;
+                    st.pop();
+                }
+                st.push(c);
+            }
+            used[c] = 1; count[c]--;
         }
-        return st;
+        string ans = "";
+        while(!st.empty()) {
+            ans += st.top();
+            st.pop();
+        }
+        reverse(ans.begin(), ans.end());
+        return ans;
     }
 };
