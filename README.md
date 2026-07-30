@@ -4,7 +4,7 @@ My solved LeetCode problems, organized by difficulty and topic. Solutions are sy
 
 ## 📊 Stats
 
-- **Total Solved:** 165+
+- **Total Solved:** 180+
 - **Languages:** C++
 - **Auto-sync:** Enabled (LeetSync)
 
