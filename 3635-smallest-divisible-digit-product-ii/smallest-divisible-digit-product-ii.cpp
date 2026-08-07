@@ -1,77 +1,179 @@
 class Solution {
 public:
-    typedef long long ll;
-
-    string freeSlotsFiller(ll required, int length) {
-        string str;
-
-        for(int digit = 9; digit >= 2; digit--) {
-            while(required % digit == 0) {
-                str.push_back(digit + '0');
-                required /= digit;
-            }
-        }
-
-        while(str.length() < length) {
-            str.push_back('1');
-        }
-
-        reverse(begin(str), end(str));
-
-        return str;
-    }
 
     string smallestNumber(string num, long long t) {
-        int n = num.length();
+        int n = num.size();
+        int factcount = count(t);
 
-        ll temp = t;
-        for(int primeFact : {2, 3, 5, 7}) {
-            while(temp % primeFact == 0) {
-                temp /= primeFact;
+        if (factcount == INT_MAX) 
+        return "-1";
+        if (factcount > num.length()) 
+        {
+            return SmallestString(t, factcount);
+        }
+
+        long long l = 0, h = n, vl = -1, ans = -1;
+
+        while (l <= h) 
+        {
+            long long mid = (l + h) / 2;
+            long long crt = t;
+            bool zeroEncountered = false;
+
+            for (int i = 0; i < mid; i++) 
+            {
+                if (num[i] == '0') 
+                {
+                    h = i;
+                    zeroEncountered = true;
+                    break;
+                }
+                crt /= gcd(crt, num[i] - '0');
+            }
+
+            if (zeroEncountered) 
+            continue;
+
+            bool possible = false;
+
+            if (mid == n) 
+            {
+                if (crt == 1) 
+                return num;
+            }
+            else 
+            {
+                for (int i = max(1, num[mid] - '0'); i < 10; i++) 
+                {
+                    long long newT = crt / gcd(crt, i);
+                    int positionsRequired = count(newT);
+
+                    if (positionsRequired <= n - mid - 1 && (i > num[mid] - '0' || CreateGreaterWithRest(num, mid + 1, newT))) 
+                    {
+                        vl = i;
+                        possible = true;
+                        break;
+                    }
+                }
+            }
+            if (possible) 
+            {
+                l = mid + 1;
+                ans = mid;
+            }
+            else 
+            {
+                h = mid - 1;
             }
         }
 
-        if(temp != 1) {
-            return "-1";
-        }
+        long long crt = t;
 
-        //Precompute remainingFactor[i] = if we take i digits of num in my result, what factor remaining for t
-        vector<ll> remainingFactor(n+1, t);
-        //"123045"
-        for(int i = 0; i < n; i++) {
-            int digit = num[i] - '0';
+        if (ans == -1) 
+        {
+            num = '0' + num;
+            int ind = n;
 
-            if(digit == 0) {
-                break;
+            for (int j = 9; j > 0; j--) 
+            {
+                while (ind > ans && crt % j == 0) 
+                {
+                    num[ind--] = '0' + j;
+                    crt /= j;
+                }
             }
-
-            remainingFactor[i+1] = remainingFactor[i]/gcd(remainingFactor[i], (ll)digit);
-        }
-
-        if(remainingFactor[n] == 1) { //the input itself is sufficient for t
             return num;
         }
 
-        int zeroPos = num.find('0');
-        int zeroIdx = n-1;
-        if(zeroPos != -1) {
-            zeroIdx = zeroPos;
+        num[ans] = '0' + vl;
+
+        for (int i = 0; i <= ans; i++) 
+        {
+            if (num[i] == '0') 
+            continue;
+
+            crt /= gcd(crt, num[i] - '0');
         }
 
-        for(int i = zeroIdx; i >= 0; i--) {
-            ll required = remainingFactor[i];
-            int freeSlots = n - 1 - i;
+        int ind = n - 1;
 
-            for(int digit = (num[i] - '0')+1; digit <= 9; digit++) {
-                ll furtherRequired = required / gcd(required, digit);
-                string requiredNumber = freeSlotsFiller(furtherRequired, freeSlots);
+        for (int j = 9; j > 0; j--) 
+        {
+            while (ind > ans && crt % j == 0) 
+            {
+                num[ind--] = '0' + j;
+                crt /= j;
+            }
+        }
+        return num;
+    }
 
-                if(requiredNumber.length() == freeSlots) {
-                    return num.substr(0, i) + char(digit + '0') + requiredNumber;
-                }
+    string SmallestString(long long t, int ct) {
+
+        string ans(ct, ' ');
+        ct--;
+        for (int i = 9; i > 1; i--) 
+        {
+            while (t % i == 0) 
+            {
+                ans[ct--] = '0' + i;
+                t /= i;
+            }
+        }
+        return ans;
+    }
+
+    int count(long long vl) 
+    {
+        int ct = 0;
+        for (int i = 9; i > 1; i--) 
+        {
+            while (vl % i == 0) 
+            {
+                vl /= i;
+                ct++;
+            }
+        }
+        if (vl > 1) 
+        return INT_MAX;
+        return ct;
+    }
+
+    bool CreateGreaterWithRest(string& num, int ind, long long vl) {
+
+        int ct = 0, n = num.size();
+        vector<int> tp(10);
+
+        for (int i = 9; i > 1; i--) 
+        {
+            while (vl % i == 0) 
+            {
+                tp[i]++;
+                vl /= i;
+                ct++;
             }
         }
 
-        return freeSlotsFiller(t, n+1); //num = "11", t = 2^15
+        int extraSpaces = n - ind - ct;
+        tp[8] += tp[2] + tp[4];
+        tp[2] = 0;
+        tp[4] = 0;
+        tp[9] += tp[3] + extraSpaces;
+        tp[3] = 0;
+
+        for (int i = 9; i >= 1; i--) 
+        {
+            while (ind < n && tp[i] > 0) 
+            {
+                if (i > num[ind] - '0') 
+                return true;
+
+                if (i < num[ind] - '0') 
+                return false;
+                ind++;
+                tp[i]--;
+            }
+        }
+        return true;
     }
 };
