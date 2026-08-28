@@ -2,117 +2,80 @@ class Solution {
 public:
     string lexPalindromicPermutation(string s, string target) {
 
-        // Step 1: Count frequency of every character
-        int n = s.size();
-        vector<int> hsh(26, 0);
-
-        for (int i = 0; i < n; i++) {
-            hsh[s[i] - 'a']++;
+        vector<int> counts(26, 0);
+        for (char c : s) {
+            counts[c - 'a']++;
         }
-
-        // Step 2: Check whether palindrome is possible
-        // Also prepare half frequencies
-        string ans = s;
-        int odd = 0;
-        for (int i = 0; i < 26; i++) {
-            if (hsh[i] % 2 != 0) {
-                odd++;
-                // Odd frequency character goes to middle
-                ans[n / 2] = char('a' + i);
+        
+        int odd_cnt = 0;
+        string M = "";
+        vector<int> half(26, 0);
+        
+        // Count odds and set up the pool for the first half
+        for (int i = 0; i < 26; ++i) {
+            if (counts[i] % 2 != 0) {
+                odd_cnt++;
+                M = string(1, i + 'a');
             }
-
-            // Only half characters are needed for left half
-            hsh[i] /= 2;
+            half[i] = counts[i] / 2;
         }
-
-        // More than one odd frequency
-        // means palindrome is impossible
-        if (odd > 1) {
+        
+        // A palindrome can have at most one character with an odd frequency
+        if (odd_cnt > 1) {
             return "";
         }
-
-        // Step 3: Match target's left half
-        // as much as possible
-        int p = 0;
-        while (p < n / 2 && hsh[target[p] - 'a']) {
-            hsh[target[p] - 'a']--;
-            p++;
+        
+        int n = s.length();
+        int L = n / 2;
+        string prefix = "";
+        
+        // Greedily build the first half of the palindrome
+        for (int i = 0; i < L; ++i) {
+            bool found = false;
+            
+            // Try characters from smallest ('a') to largest ('z')
+            for (int c = 0; c < 26; ++c) {
+                if (half[c] > 0) {
+                    half[c]--; // Temporarily pick this character
+                    
+                    // Construct the MAXIMUM possible first half with the remaining characters
+                    string H_temp = prefix + (char)(c + 'a');
+                    for (int j = 25; j >= 0; --j) {
+                        if (half[j] > 0) {
+                            H_temp.append(half[j], (char)(j + 'a'));
+                        }
+                    }
+                    
+                    // Form the full max palindrome
+                    string P_max = H_temp + M;
+                    string H_rev = H_temp;
+                    reverse(H_rev.begin(), H_rev.end());
+                    P_max += H_rev;
+                    
+                    // If the maximum possible palindrome is greater than target, this choice is valid!
+                    if (P_max > target) {
+                        prefix += (char)(c + 'a');
+                        found = true;
+                        break; // Lock in this character and proceed to the next position
+                    }
+                    
+                    // Backtrack and try the next character
+                    half[c]++;
+                }
+            }
+            
+            // If no character works for the current position, it's impossible
+            if (!found) {
+                return "";
+            }
         }
-
-        // Step 4: Start backtracking from the right
-        int start = min(n - 1, p);
-        for (int i = start; i >= 0; i--) {
-
-            // Step 5: Handle middle position
-            // for odd length
-            if (i == n / 2) {
-                for (int j = 0; j < n / 2; j++) {
-                    ans[j] = target[j];
-                    ans[n - 1 - j] = target[j];
-                }
-
-                if (ans > target) {
-                    return ans;
-                }
-                continue;
-            }
-
-            // Step 6: Current target character
-            int b = target[i] - 'a';
-
-            // Step 7: If this character was already
-            // consumed while matching prefix,
-            // put it back
-            if (i < p) {
-                hsh[b]++;
-            }
-
-            // Step 8: Find the smallest character
-            // greater than target[i]
-            int idx = -1;
-            for (int c = b + 1; c < 26; c++) {
-                if (hsh[c]) {
-                    hsh[c]--;
-                    idx = c;
-                    break;
-                }
-            }
-            // No greater character available
-            if (idx == -1) {
-                continue;
-            }
-            // Step 9: Keep prefix same as target
-            for (int j = 0; j < i; j++) {
-                ans[j] = target[j];
-            }
-            // Step 10: Put greater character
-            // at current position
-            ans[i] = char('a' + idx);
-
-            // Step 11: Fill remaining characters
-            // in ascending order
-            int k = i + 1;
-
-            for (int c = 0; c < 26; c++) {
-                while (k < n && hsh[c]) {
-                    ans[k] = char(c + 'a');
-                    k++;
-                    hsh[c]--;
-                }
-            }
-
-            // Step 12: Mirror the left half
-            // to create palindrome
-            for (int j = 0; j < n / 2; j++) {
-              ans[n - 1 - j] = ans[j];
-            }
-
-            // We found the lexicographically
-            // smallest valid answer
-            return ans;
-        }
-
-        // No valid palindrome greater than target
-        return "";
+        
+        // Construct the final lexicographically smallest valid palindrome
+        string result = prefix + M;
+        string pref_rev = prefix;
+        reverse(pref_rev.begin(), pref_rev.end());
+        result += pref_rev;
+        
+        return result > target ? result : "";
     }
 };
